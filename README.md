@@ -1,1 +1,1 @@
-Please refer to the `README.md` file in the `master` branch for instructions.
+Please refer to the `README.md` file in the `main` branch for instructions.
