@@ -1,0 +1,1 @@
+python experiments/run_bc.py --env_name=ClothFold --env_img_size=32  --num_eval_eps=10 --seed=11 --load_ob_image_mode=direct --env_kwargs_num_variations=1000 --max_train_epochs=1000 --is_image_based=False --is_eval=True --test_checkpoint=checkpoints/ClothFold/bc-state/SOTA-ClothFold_BC_02.22.22.29-STATE-ckpt-epoch_20.pth --eval_over_five_seeds=True --observation_size=18

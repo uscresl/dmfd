@@ -1,0 +1,1 @@
+python experiments/run_sb3.py --is_eval=True --checkpoint=checkpoints/RopeFlatten/awac/ABL-RopeFlatten_SB3_awac_02.05.14.21-STATE-Baseline-11-ckpt-model3000000.pt --eval_videos=False --eval_over_five_seeds=True --env_name=RopeFlatten --env_kwargs_observation_mode=key_point --env_kwargs_num_variations=1000 --agent=awac --seed=11

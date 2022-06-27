@@ -1,0 +1,1 @@
+python experiments/run_curl.py --env_name=ClothFoldRobot --name=eval_folder --log_dir=checkpoints/ClothFoldRobot/curl --env_kwargs_observation_mode=cam_rgb --env_kwargs_num_variations=1 --is_eval=True --checkpoint=checkpoints/ClothFoldRobot/curl/SOTA_ClothFoldRobot_SACCURL_02.14.09.19_IMAGE11-ckpt-actor_1000000.pt --eval_over_five_seeds=True

@@ -1,0 +1,1 @@
+python experiments/run_curl.py --env_name=RopeFlatten --name=eval_folder --log_dir=checkpoints/RopeFlatten/curl --env_kwargs_observation_mode=cam_rgb --env_kwargs_num_variations=1000 --is_eval=True --checkpoint=checkpoints/RopeFlatten/curl/SOTA_RopeFlatten_SACCURL_02.03.19.30_22-ckpt-actor_1000000.pt --eval_over_five_seeds=True

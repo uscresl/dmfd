@@ -1,0 +1,1 @@
+python experiments/run_curl.py --env_name=ClothFold --name=eval_folder --log_dir=checkpoints/ClothFold/sac --env_kwargs_observation_mode=key_point --env_kwargs_num_variations=1000 --is_eval=True --checkpoint=checkpoints/ClothFold/sac/SOTA_ClothFold_SAC_02.05.21.06_11-ckpt-actor_1000000.pt --eval_over_five_seeds=True

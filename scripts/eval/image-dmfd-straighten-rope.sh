@@ -1,0 +1,1 @@
+python experiments/run_sb3.py --is_eval=True --checkpoint=checkpoints/RopeFlatten/ours-image/SOTA-RopeFlatten_SB3_awac_02.05.13.28-IMAGE-11-ckpt-model1000000.pt --eval_videos=False --eval_over_five_seeds=True --env_name=RopeFlatten --env_kwargs_observation_mode=cam_rgb_key_point --env_kwargs_num_variations=1000 --agent=awac --seed=11

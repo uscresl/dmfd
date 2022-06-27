@@ -1,0 +1,1 @@
+python experiments/run_sb3.py --env_name=ClothFold --env_kwargs_observation_mode=key_point --env_kwargs_num_variations=1000 --agent=awac  --is_eval=True --checkpoint=checkpoints/ClothFold/awac/SOTA-ClothFold_SB3_awac_baseline_02.19.16.59-STATE-11-ckpt-model3000000.pt --eval_videos=False --eval_over_five_seeds=True

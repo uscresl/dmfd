@@ -1,0 +1,22 @@
+name: softgym
+channels:
+  - defaults
+dependencies:
+  - numpy
+  - imageio
+  - glob2
+  - cmake=3.14.0
+  - pybind11
+  - click
+  - matplotlib
+  - joblib
+  - Pillow
+  - plotly
+  - pip:
+    - gtimer
+    - gym
+    - moviepy
+    - opencv-python
+    - Shapely
+    - pyquaternion
+    - sk-video

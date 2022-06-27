@@ -1,0 +1,1 @@
+python experiments/run_drq.py --env_name=RopeFlatten --name=eval_folder --log_dir=checkpoints/RopeFlatten/drq --env_kwargs_num_variations=1000 --seed=11 --is_eval=True --checkpoint=checkpoints/RopeFlatten/drq/SOTA_RFlat_SACDrQ_02.03.19.01_33-ckpt-actor_990000.pt --eval_over_five_seeds=True
