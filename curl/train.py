@@ -77,23 +77,6 @@ def get_info_stats(infos):
     return stat_dict
 
 
-def fill_replay_buffer(replay_buffer, expert_data):
-    expert_data = np.load(expert_data, allow_pickle=True)
-    states = expert_data['ob_trajs']
-    next_states = expert_data['ob_next_trajs']
-    actions = expert_data['action_trajs']
-    rewards = expert_data['reward_trajs']
-    dones = expert_data['done_trajs']
-    for ep_counter in range(states.shape[0]):
-        for traj_counter in range(len(states[ep_counter])):
-            replay_buffer.add(
-                states[ep_counter][traj_counter],
-                actions[ep_counter][traj_counter],
-                rewards[ep_counter][traj_counter],
-                next_states[ep_counter][traj_counter],
-                dones[ep_counter][traj_counter],
-            )
-
 def evaluate(env, agent, video_dir, num_episodes, L, step, args):
     all_ep_rewards = []
 
@@ -360,9 +343,6 @@ def main(args):
         device=device,
         image_size=args.image_size,
     )
-
-    if args.expert_data:
-        fill_replay_buffer(replay_buffer, args.expert_data)
 
     agent = make_agent(
         obs_shape=obs_shape,

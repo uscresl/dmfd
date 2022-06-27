@@ -45,7 +45,6 @@ parser = argparse.ArgumentParser()
 ## general arguments
 parser.add_argument('--is_eval', type=str2bool, default=False, help="evaluation or training mode")
 parser.add_argument('--is_image_based', type=str2bool, default=False, help="state-based or image-based observations")
-parser.add_argument('--is_bc_for_sac', type=str2bool, default=False, help="whether or not we're training a BC-Visual for SAC")
 parser.add_argument('--enable_img_transformations', type=str2bool, default=False, help="Whether to enable image transformations")
 parser.add_argument('--load_ob_image_mode', default='separate_folder', choices=['direct', 'separate_folder'], help='direct: load all images in memory; separate_folder: only load mini-batch images in memory')
 parser.add_argument('--eval_videos', type=str2bool, default=False, help="whether or not to save evaluation video per episode")
@@ -230,73 +229,6 @@ class BC_Visual(nn.Module):
         action = torch.tanh(z)
         return action
 
-class BC_Visual_SAC_Actor(nn.Module):
-    def __init__(self, action_size=2):
-        super(BC_Visual_SAC_Actor, self).__init__()
-
-        img_size = args.env_img_size
-
-        self.cnn_layers = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2),
-            nn.LeakyReLU(),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1),
-            nn.LeakyReLU(),
-			nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1),
-            nn.LeakyReLU(),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1),
-            nn.LeakyReLU(),
-        )
-
-        test_mat = torch.zeros(1, 3, img_size, img_size) # (1, img_channel, env_image_size, env_image_size)
-        for conv_layer in self.cnn_layers:
-            test_mat = conv_layer(test_mat)
-        fc_input_size = int(np.prod(test_mat.shape))
-
-        self.head = nn.Sequential(
-            nn.Linear(fc_input_size, 50),
-            nn.LayerNorm(50))
-
-        self.trunk = nn.Sequential(
-            nn.Linear(50, 1024), nn.ReLU(),
-            nn.Linear(1024, 1024), nn.ReLU(),
-            nn.Linear(1024, 2 * action_size)
-        )
-
-        self.log_std_min = -10
-        self.log_std_max = 2
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.zeros_(m.bias)
-
-    def forward(self, x):
-        """
-        CoLActor in curl_sac.py
-        """
-        x = self.cnn_layers(x)
-        x = torch.flatten(x, 1)
-        latent_pi = self.head(x)
-        mu, log_std = self.trunk(latent_pi).chunk(2, dim=-1)
-
-        log_std = torch.tanh(log_std)
-        log_std = self.log_std_min + 0.5 * (
-          self.log_std_max - self.log_std_min
-        ) * (log_std + 1)
-
-        std = log_std.exp()
-        noise = torch.randn_like(mu)
-        pi = mu + noise * std
-
-        return pi
-
 class Demonstrations(Dataset):
     def __init__(self, file_path):
         self.data = self.load_file(file_path)
@@ -371,10 +303,7 @@ class Evaluation:
 
     def evaluate(self, checkpoint):
         if args.is_image_based:
-            if args.is_bc_for_sac:
-                model_eval = BC_Visual_SAC_Actor(action_size=args.action_size)
-            else:
-                model_eval = BC_Visual(action_size=args.action_size)
+            model_eval = BC_Visual(action_size=args.action_size)
         else:
             model_eval = BC(obs_size=args.observation_size, action_size=args.action_size)
 
@@ -427,10 +356,7 @@ class Evaluation:
 
     def evaluate_five_seeds(self, checkpoint):
         if args.is_image_based:
-            if args.is_bc_for_sac:
-                model_eval = BC_Visual_SAC_Actor(action_size=args.action_size)
-            else:
-                model_eval = BC_Visual(action_size=args.action_size)
+            model_eval = BC_Visual(action_size=args.action_size)
         else:
             model_eval = BC(obs_size=args.observation_size, action_size=args.action_size)
 
@@ -488,10 +414,7 @@ def main_training():
 
     mse_loss = nn.MSELoss()
     if args.is_image_based:
-        if args.is_bc_for_sac:
-            model = BC_Visual_SAC_Actor(action_size=args.action_size)
-        else:
-            model = BC_Visual(action_size=args.action_size)
+        model = BC_Visual(action_size=args.action_size)
     else:
         model = BC(obs_size=args.observation_size, action_size=args.action_size)
     optimizer = optim.Adam(list(model.parameters()), lr = args.lrate, betas = (args.beta1, args.beta2))

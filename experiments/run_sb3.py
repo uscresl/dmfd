@@ -1,4 +1,3 @@
-import joblib
 from sb3.train import run_task
 from sb3.eval import evaluation
 from sb3.utils import str2bool, set_seed_everywhere, update_env_kwargs, make_dir, NumpyEncoder
@@ -16,7 +15,6 @@ reward_scales = {
     'ClothFold': 50.0,
     'ClothFoldRobot': 50.0,
     'ClothFoldRobotHard': 50.0,
-    'DryCloth': 50.0,
     'ClothFlatten': 50.0,
     'ClothDrop': 50.0,
     'RopeFlatten': 50.0,
@@ -28,7 +26,6 @@ clip_obs = {
     'ClothFold': (-3, 3),
     'ClothFoldRobot': (-3, 3),
     'ClothFoldRobotHard': (-3, 3),
-    'DryCloth': (-3, 3),
     'ClothFlatten': (-2, 2),
     'ClothDrop': None,
     'RopeFlatten': None,
@@ -72,7 +69,7 @@ def main():
     ############## RSI+IR ##############
     parser.add_argument('--enable_rsi',     default=False, type=str2bool, help="whether or not reference state initialization (RSI) is enabled")
     parser.add_argument('--rsi_file',       default=None, type=str, help='Reference State Initialization file. Path to the trajectory to imitate')
-    parser.add_argument('--rsi_ir_prob',    default=0.0, type=float, help='RSI+IR with probability x')
+    parser.add_argument('--rsi_ir_prob',    default=0.1, type=float, help='RSI+IR with probability x')
     parser.add_argument('--non_rsi_ir', default=False, type=str2bool, help='whether or not to use non-RSI+IR')
     parser.add_argument('--enable_action_matching', default=False, type=str2bool, help="whether or not action matching is enabled")
     parser.add_argument('--enable_loading_states_from_folder', default=False, type=str2bool, help="whether or not to enable loading states from folder")
@@ -90,28 +87,17 @@ def main():
     parser.add_argument('--p_lr', default=3e-4, type=float, help='policy/actor learning rate')
     parser.add_argument('--lr', default=3e-4, type=float, help='critics learning rate')
     parser.add_argument('--awac_replay_size', default=2_000_000, type=int, help="AWAC replay buffer size")
-    parser.add_argument('--expert_repeat_num', default=None, type=int, help="Whether or not to repeat expert data. If yes, repeat the expert data expert_repeat_num times")
     parser.add_argument('--add_sac_loss', default=False, type=str2bool, help="whether or not to add SAC's actor loss to AWAC's")
     parser.add_argument('--sac_loss_weight', default=0.0, type=float, help='weight given to sac_loss=sac_loss_weight and awac_loss=(1-sac_loss_weight)')
-    parser.add_argument('--critics_input', default='image_state', choices=['image_state', 'image', 'state'])
     parser.add_argument('--enable_img_aug', default=False, type=str2bool, help="whether or not to enable image augmentations")
     parser.add_argument('--enable_drq_loss', default=False, type=str2bool, help="whether or not to use Dr.Q's Q-function")
-    parser.add_argument('--save_video_pickplace', action='store_true', default=False, help='Whether to save pick and place recorded videos')
-    parser.add_argument('--load_from', default=None, type=str, help="file path to pretrained AWAC object (model, optimizer, etc.)")
-    parser.add_argument('--enable_inv_dyn_model', default=False, type=str2bool, help="whether or not to jointly learn DMfD with an inverse dynamics model (inspired by SOIL)")
-    parser.add_argument('--inv_dyn_file', default=None, type=str, help='State-only demonstrations for training inverse dynamics model')
-    parser.add_argument('--real_image',  default=None, type=str, help="real image file")
 
     ############## Override environment arguments ##############
     parser.add_argument('--env_kwargs_render', default=True, type=str2bool)  # Turn off rendering can speed up training
     parser.add_argument('--env_kwargs_camera_name', default='default_camera', type=str)
-    parser.add_argument('--env_kwargs_observation_mode', default='key_point', type=str)  # Should be in ['key_point', 'cam_rgb', 'point_cloud']. Only AWAC supports 'cam_rgb_key_point' and 'depth_key_point'.
+    parser.add_argument('--env_kwargs_observation_mode', default='key_point', type=str)  # Should be in ['key_point', 'cam_rgb', 'point_cloud']. Only AWAC supports 'cam_rgb_key_point'.
     parser.add_argument('--env_kwargs_num_variations', default=1000, type=int)
     parser.add_argument('--env_kwargs_env_image_size', default=32, type=int, help="observation image size")
-    parser.add_argument('--env_kwargs_num_picker', default=2, type=int, help='Number of pickers/end-effectors')
-    parser.add_argument('--action_mode', type=str, default=None, help='Overwrite action_mode in the environment')
-    parser.add_argument('--action_repeat', type=int, default=None, help='Overwrite action_repeat in the environment')
-    parser.add_argument('--horizon', type=int, default=None, help='Overwrite action_repeat in the environment')
 
     args = parser.parse_args()
 
@@ -123,7 +109,7 @@ def main():
     args.env_kwargs = env_arg_dict[env_name]
     args.__dict__ = update_env_kwargs(args.__dict__)  # Update env_kwargs
 
-    not_imaged_based = args.env_kwargs['observation_mode'] not in ['cam_rgb', 'cam_rgb_key_point', 'depth_key_point']
+    not_imaged_based = args.env_kwargs['observation_mode'] != 'cam_rgb' and args.env_kwargs['observation_mode'] != 'cam_rgb_key_point'
     symbolic = not_imaged_based
     args.encoder_type = 'identity' if symbolic else 'pixel'
     args.max_steps = 200
@@ -150,20 +136,12 @@ def main():
     env_kwargs['env_kwargs']['enable_normalize_obs'] = args.enable_normalize_obs
     env_kwargs['env_kwargs']['normalize_obs_file'] = args.normalize_obs_file
     env_kwargs['env_kwargs']['enable_loading_states_from_folder'] = args.enable_loading_states_from_folder
-    if args.action_mode:
-        env_kwargs['env_kwargs']['action_mode'] = args.action_mode
-    if args.action_repeat:
-        env_kwargs['env_kwargs']['action_repeat'] = args.action_repeat
-    if args.horizon:
-        env_kwargs['env_kwargs']['horizon'] = args.horizon
 
-    # assertions for various argument combinations
     if args.enable_rsi:
         assert args.rsi_file
+
     if args.enable_drq_loss:
         assert args.enable_img_aug
-    if args.enable_inv_dyn_model:
-        assert args.inv_dyn_file
 
     # get device
     if torch.cuda.is_available():
@@ -180,9 +158,7 @@ def main():
         if args.agent == 'awac':
             # separate evaluation code for AWAC
             agent = AWAC(args.__dict__, env_kwargs)
-            if args.real_image:
-                agent.real_image_eval(args.__dict__)
-            elif args.eval_over_five_seeds:
+            if args.eval_over_five_seeds:
                 agent.eval_agent_five_seeds(args.__dict__)
             else:
                 agent.eval_agent(args.__dict__)
@@ -202,25 +178,12 @@ def main():
         if args.agent == 'awac':
             # separate training code for AWAC
             agent = AWAC(args.__dict__, env_kwargs)
-            if args.load_from is not None:
-                saved = joblib.load(args.load_from)
-                agent.starting_timestep = saved['iterations']
-                agent.load_state_dict(saved)
-                print(f'Loaded AWAC COMPONENTS from {args.load_from}. Iterations: {saved["iterations"]}')
-                print(f'RSI file will be ignored ({args.rsi_file})')
-                del saved # free up memory
-            else:
-                if args.rsi_file:
-                    agent.populate_replay_buffer(args.rsi_file, repeat_num=args.expert_repeat_num)
-            if args.enable_inv_dyn_model:
-                agent.run_with_inv_dyn_model(args)
-            else:
-                agent.run(args)
+            if args.rsi_file:
+                agent.populate_replay_buffer(args.rsi_file)
+            agent.run(args)
         else:
             # training code for SB3-based policies
             run_task(args, env_kwargs)
-
-print(f"Done! Train/eval script finished.")
 
 if __name__ == '__main__':
     main()

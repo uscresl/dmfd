@@ -139,8 +139,6 @@ class SoftGymEnvSB3(gym.Env):
         if not self.symbolic:
             if self._env.observation_mode == 'cam_rgb_key_point':
                 self.image_c = 3
-            elif self._env.observation_mode == 'depth_key_point':
-                self.image_c = 1
             else:
                 self.image_c = self._env.observation_space.shape[-1]
         self.normalize_observation = config.get('normalize_observation')
@@ -161,7 +159,7 @@ class SoftGymEnvSB3(gym.Env):
         else:
             # comment out because currently our method does not require the images to be resized or normalized. Also, this could break AWAC with imageas as input.
             # return _images_to_observation(obs, self.bit_depth, self.image_dim, normalize_observation=self.normalize_observation)
-            obs['image'] = torch.tensor(np.expand_dims(obs['image'].transpose(2, 0, 1), axis=0), dtype=torch.uint8)
+            obs['cam_rgb'] = torch.tensor(np.expand_dims(obs['cam_rgb'].transpose(2, 0, 1), axis=0), dtype=torch.uint8)
             return obs
 
     def step(self, action, **kwargs):
@@ -181,7 +179,7 @@ class SoftGymEnvSB3(gym.Env):
             else:
                 # comment out because currently our method does not require the images to be resized or normalized. Also, this could break AWAC with imageas as input.
                 # obs = _images_to_observation(obs, self.bit_depth, self.image_dim, normalize_observation=self.normalize_observation)
-                obs['image'] = torch.tensor(np.expand_dims(obs['image'].transpose(2, 0, 1), axis=0), dtype=torch.uint8)
+                obs['cam_rgb'] = torch.tensor(np.expand_dims(obs['cam_rgb'].transpose(2, 0, 1), axis=0), dtype=torch.uint8)
             if done:
                 break
         return obs, reward, done, info
@@ -194,7 +192,7 @@ class SoftGymEnvSB3(gym.Env):
 
     @property
     def observation_space(self):
-        if self._env.observation_mode in ['cam_rgb_key_point', 'depth_key_point']:
+        if self._env.observation_mode == 'cam_rgb_key_point':
             return self._env.observation_space
         else:
             if self.symbolic:

@@ -95,12 +95,10 @@ void ShadowEnd();
 
 struct RenderTexture;
 RenderTexture* CreateRenderTexture(const char* filename);
-RenderTexture* CreateRenderTarget(int width, int height, bool depth);
-void CreateRenderTarget(int width, int height, bool depth, RenderTexture** res);
+RenderTexture* CreateRenderTarget(int with, int height, bool depth);
 void DestroyRenderTexture(RenderTexture* tex);
 
-void SetRenderTarget(RenderTexture* target, int x, int y, int width, int height);
-void ReadRenderTarget(const RenderTexture* target, float* rgba, int x, int y, int width, int height);
+void SetRenderTarget(RenderTexture* target);
 
 struct RenderMaterial
 {
@@ -161,13 +159,6 @@ float RendererGetDeviceTimestamps(unsigned long long* begin, unsigned long long*
 void* GetGraphicsCommandQueue();
 void GraphicsTimerBegin();
 void GraphicsTimerEnd();
-
-// Profiles on rendering depth for sensors
-struct DepthRenderProfile {
-	float minRange;
-	float maxRange;
-};
-void SetDepthRenderProfile(DepthRenderProfile profile);
 
 // new fluid renderer
 struct FluidRenderer;

@@ -20,17 +20,12 @@ def main():
     parser.add_argument('--headless', type=int, default=1, help='Whether to run the environment with headless rendering')
     parser.add_argument('--num_variations', type=int, default=1000, help='Number of environment variations')
     parser.add_argument('--num_eps', type=int, default=100000, help='Number of epsidoes to be generated')
-    parser.add_argument('--env_horizon', type=int, default=None, help='Set a non-default number of steps for the episode')
-    parser.add_argument('--action_mode', type=str, default=None, help='Overwrite action_mode in the environment')
-    parser.add_argument('--action_repeat', type=int, default=None, help='Overwrite action_repeat in the environment')
-    parser.add_argument('--num_picker', default=None, type=int, help='Overwrite num_picker in the environment')
     parser.add_argument('--save_dir', type=str, default='./data/', help='Path to the saved video/demonstrations data')
-    parser.add_argument('--remove_actions_from_obs', type=str2bool, default=False, help='Whether to remove action values from observations (default observations contain action values)')
     parser.add_argument('--save_gif', type=str2bool, default=False, help='Whether to save results as gif')
     parser.add_argument('--save_observation_img', type=str2bool, default=False, help='Whether to save observation image (for image-based methods)')
-    parser.add_argument('--image_mode', default='rgb', choices=['rgb', 'depth'], help='Whether the observation image is depth or rgb')
     parser.add_argument('--save_states_in_folder', type=str2bool, default=False, help='Whether to save states in a separate folder')
     parser.add_argument('--img_size', type=int, default=256, help='Size of the recorded videos')
+    parser.add_argument('--env_kwargs_observation_mode', default='key_point', type=str)  # Should be in ['key_point', 'cam_rgb', 'point_cloud']
     parser.add_argument('--ir_reward_weight', default=0, type=float, help='weight for imitation reward')
     parser.add_argument('--out_filename', default=None, type=str)
 
@@ -44,7 +39,7 @@ def main():
     env_kwargs['num_variations'] = args.num_variations
     env_kwargs['render'] = True
     env_kwargs['headless'] = args.headless
-    env_kwargs['observation_mode'] = 'key_point' # Always state for experts.
+    env_kwargs['observation_mode'] = args.env_kwargs_observation_mode
     env_kwargs['ir_reward_weight'] = args.ir_reward_weight
     # if args.env_kwargs_observation_mode != 'point_cloud':
     #     raise Warning('Obs mode is not point_cloud (i.e. not getting full state info')
@@ -72,21 +67,10 @@ def main():
 
     if not env_kwargs['use_cached_states']:
         print('Waiting to generate environment variations. May take 1 minute for each variation...')
-    if args.env_horizon:
-        env_kwargs['horizon'] = args.env_horizon
-    if args.action_mode:
-        env_kwargs['action_mode'] = args.action_mode
-    if args.action_repeat:
-        env_kwargs['action_repeat'] = args.action_repeat
-    if args.num_picker:
-        env_kwargs['num_picker'] = args.num_picker
-
     env = normalize(SOFTGYM_ENVS[args.env_name](**env_kwargs))
     #assert isinstance(env._wrapped_env, RopeFlattenEnv), "Expert policy is only available for RopeFlattenEnv"
     #assert isinstance(env._wrapped_env, ClothFoldEnv), "Expert policy is only available for ClothFoldEnv"
 
-    num_picker = env.action_tool.num_picker
-    num_action_vals = num_picker * 3 # each picker has x, y, z values
     pbar = tqdm(total=args.num_eps)
     eps = 0
     is_done_generating = False
@@ -117,14 +101,9 @@ def main():
             else:
                 states.append(env.get_state())
             actions.append(action)
-            if args.remove_actions_from_obs:
-                obs = obs[:-num_action_vals]
             observations.append(obs)
             if args.save_observation_img:
-                if args.image_mode == 'rgb':
-                    ob_img_traj.append(env.get_image(args.env_img_size, args.env_img_size))
-                elif args.image_mode == 'depth':
-                    ob_img_traj.append(env.get_depth_image(args.env_img_size, args.env_img_size))
+                ob_img_traj.append(env.get_image(args.env_img_size, args.env_img_size))
             if args.save_gif:
                 # By default, the environments will apply action repitition. The option of record_continuous_video provides rendering of all
                 # intermediate frames. Only use this option for visualization as it increases computation.
@@ -134,16 +113,9 @@ def main():
                 obs, rew, done, info = env.step(action)
 
             if args.save_observation_img:
-                if args.image_mode == 'rgb':
-                    cur_img = env.get_image(args.env_img_size, args.env_img_size)
-                elif args.image_mode == 'depth':
-                    cur_img = env.get_depth_image(args.env_img_size, args.env_img_size)
+                cur_img = env.get_image(args.env_img_size, args.env_img_size)
                 next_ob_img_traj.append(cur_img)
-            if args.remove_actions_from_obs:
-                next_obs = obs[:-num_action_vals]
-            else:
-                next_obs = obs
-            next_observations.append(next_obs)
+            next_observations.append(obs)
             rewards.append(rew)
             dones.append(done)
             ep_rew += rew

@@ -216,7 +216,7 @@ class FlexEnv(gym.Env):
 
     def render(self, mode='rgb_array'):
         if mode == 'rgb_array':
-            img, depth = pyflex.render()
+            img = pyflex.render()
             width, height = self.camera_params['default_camera']['width'], self.camera_params['default_camera']['height']
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
             return img
@@ -230,14 +230,6 @@ class FlexEnv(gym.Env):
         if width != img.shape[0] or height != img.shape[1]:
             img = cv2.resize(img, (width, height))
         return img
-
-    def get_depth_image(self, width=720, height=720):
-        _, depth = pyflex.render()
-        depth = depth.reshape((720, 720))[::-1]
-        if width != depth.shape[0] or height != depth.shape[1]:
-            depth = cv2.resize(depth, (width, height))
-        depth = depth[:, :, None] # (width, height) to (width, height, 1)
-        return depth
 
     def set_scene(self, config, state=None):
         """ Set up the flex scene """

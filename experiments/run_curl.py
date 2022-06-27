@@ -79,7 +79,6 @@ def main():
     parser.add_argument('--init_temperature', default=0.1, type=float)
     parser.add_argument('--replay_buffer_capacity', default=100000)
     parser.add_argument('--batch_size', default=128)
-    parser.add_argument('--expert_data', default=None, type=str, help="whether or not to prefill the replay buffer")
 
     ############## RSI+IR ##############
     parser.add_argument('--enable_rsi',     default=False, type=str2bool, help="whether or not reference state initialization (RSI) is enabled")

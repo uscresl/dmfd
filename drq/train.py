@@ -141,7 +141,7 @@ class Workspace(object):
         if self.wandb:
             now = datetime.now().strftime("%m.%d.%H.%M")
             cfg_dict = cfg.__dict__
-            cfg_dict['run_name'] = cfg.name
+            cfg_dict['run_name'] = f'{cfg.env_name}_DrQ_{now}'
             self.wandb_run = wandb.init(
                                     project="cto-rl-manipulation",
                                     config=cfg_dict,

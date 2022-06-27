@@ -354,7 +354,7 @@ class ClothFoldRobotEnv(ClothEnv):
                 # only one actuator (the other two are table and box)
                 pos = np.concatenate([pos.flatten(), shapes[0, 0:3].flatten()])
             pos = {
-                'image': self.get_image(self.env_image_size, self.env_image_size),
+                'cam_rgb': self.get_image(self.env_image_size, self.env_image_size),
                 'key_point': pos,
             }
         else:
@@ -459,10 +459,7 @@ class ClothFoldRobotEnv(ClothEnv):
         return action
 
 class ClothFoldRobotHardEnv(ClothFoldRobotEnv):
-    """
-    Same as ClothFoldRobot, except that I have moved the box out of the way in _reset().
-    This is used for SOTA experiments.
-    """
+    """Same as ClothFoldRobot, except that I have moved the box out of the way in _reset()"""
 
     def _reset(self):
         """ Right now only use one initial state. Need to make sure _reset always give the same result. Otherwise CEM will fail."""

@@ -57,7 +57,7 @@ class RopeNewEnv(FlexEnv):
                 raise NotImplementedError
             self.observation_space = spaces.Dict(
                 dict(
-                    image = Box(low=-np.inf, high=np.inf, shape=(self.env_image_size, self.env_image_size, 3), dtype=np.float32),
+                    cam_rgb = Box(low=-np.inf, high=np.inf, shape=(self.env_image_size, self.env_image_size, 3), dtype=np.float32),
                     key_point = Box(np.array([-np.inf] * obs_dim), np.array([np.inf] * obs_dim), dtype=np.float32)
                 )
             )
@@ -94,7 +94,7 @@ class RopeNewEnv(FlexEnv):
                 shapes = np.reshape(shapes, [-1, 14])
                 pos = np.concatenate([pos.flatten(), shapes[:, 0:3].flatten()])
             pos = {
-                'image': self.get_image(self.env_image_size, self.env_image_size),
+                'cam_rgb': self.get_image(self.env_image_size, self.env_image_size),
                 'key_point': pos,
             }
         else:

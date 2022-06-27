@@ -7,8 +7,7 @@ from torch.distributions.normal import Normal
 import torch.distributions as D
 import math
 
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
+device = torch.device("cuda")
 def combined_shape(length, shape=None):
     if shape is None:
         return (length,)
@@ -24,21 +23,6 @@ def mlp(sizes, activation, output_activation=nn.Identity):
 def count_vars(module):
     return sum([np.prod(p.shape) for p in module.parameters()])
 
-class InvDynMLP(nn.Module):
-    """MLP inverse dynamics model."""
-
-    def __init__(self, obs_dim, act_dim, mlp_w=64):
-        super(InvDynMLP, self).__init__()
-        # Build the model
-        self.fc0 = nn.Linear(obs_dim * 2, mlp_w)
-        self.fc1 = nn.Linear(mlp_w, mlp_w)
-        self.fc2 = nn.Linear(mlp_w, act_dim)
-
-    def forward(self, x):
-        x = F.tanh(self.fc0(x))
-        x = F.tanh(self.fc1(x))
-        x = self.fc2(x)
-        return x
 
 LOG_STD_MAX = 2
 LOG_STD_MIN = -20
@@ -197,7 +181,7 @@ class awacCNNActor(nn.Module):
     def forward(self, obs, deterministic=False, with_logprob=True):
         # print("Using the special policy")
         if isinstance(obs, dict):
-            obs = torch.as_tensor(obs['image'], dtype=torch.float32)
+            obs = torch.as_tensor(obs['cam_rgb'], dtype=torch.float32)
 
         obs = self.cnn_layers(obs.to(device))
         obs = torch.flatten(obs, 1)
@@ -236,7 +220,7 @@ class awacCNNActor(nn.Module):
 
     def get_logprob(self,obs, actions):
         if isinstance(obs, dict):
-            obs = torch.as_tensor(obs['image'], dtype=torch.float32)
+            obs = torch.as_tensor(obs['cam_rgb'], dtype=torch.float32)
 
         obs = self.cnn_layers(obs.to(device))
         obs = torch.flatten(obs, 1)
@@ -253,10 +237,11 @@ class awacCNNActor(nn.Module):
         return logp_pi
 
 class awacDrQCNNEncoder(nn.Module):
-    def __init__(self, env_image_size, img_channel, feature_dim):
+    def __init__(self, env_image_size, feature_dim):
         super().__init__()
+        self.num_layers = 4
         self.cnn_layers = nn.Sequential(
-            nn.Conv2d(in_channels=img_channel, out_channels=32, kernel_size=3, stride=2),
+            nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2),
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, stride=1),
             nn.LeakyReLU(),
@@ -266,7 +251,7 @@ class awacDrQCNNEncoder(nn.Module):
             nn.LeakyReLU(),
         )
 
-        test_mat = torch.zeros(1, img_channel, env_image_size, env_image_size)
+        test_mat = torch.zeros(1, 3, env_image_size, env_image_size)
         for conv_layer in self.cnn_layers:
             test_mat = conv_layer(test_mat)
         fc_input_size = int(np.prod(test_mat.shape))
@@ -287,13 +272,9 @@ class awacDrQCNNEncoder(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.zeros_(m.bias)
 
-    def forward(self, obs, detach=False):
+    def forward(self, obs):
         obs = obs / 255.
         out = self.cnn_layers(obs)
-
-        if detach:
-            out = out.detach()
-
         out = torch.flatten(out, 1)
         out = self.head(out)
         out = torch.tanh(out)
@@ -304,13 +285,18 @@ class awacDrQCNNEncoder(nn.Module):
         trg.weight = src.weight
         trg.bias = src.bias
 
+    def copy_conv_weights_from(self, source):
+        """Tie convolutional layers"""
+        for i in range(self.num_layers):
+            if not isinstance(source.cnn_layers[1], nn.LeakyReLU):
+                self.tie_weights(src=source.cnn_layers[i], trg=self.cnn_layers[i])
 
 class awacDrQCNNActor(nn.Module):
 
-    def __init__(self, act_dim, act_limit, env_image_size, img_channel, feature_dim):
+    def __init__(self, act_dim, act_limit, env_image_size, feature_dim):
         super().__init__()
 
-        self.encoder = awacDrQCNNEncoder(env_image_size, img_channel, feature_dim)
+        self.encoder = awacDrQCNNEncoder(env_image_size, feature_dim)
 
         self.latent_pi = nn.Sequential(
             nn.Linear(feature_dim, 1024),
@@ -329,7 +315,7 @@ class awacDrQCNNActor(nn.Module):
 
     def forward(self, obs, deterministic=False, with_logprob=True):
         if isinstance(obs, dict):
-            obs = torch.as_tensor(obs['image'], dtype=torch.float32)
+            obs = torch.as_tensor(obs['cam_rgb'], dtype=torch.float32)
 
         obs = self.encoder(obs.to(device))
         net_out = self.latent_pi(obs)
@@ -367,7 +353,7 @@ class awacDrQCNNActor(nn.Module):
 
     def get_logprob(self,obs, actions):
         if isinstance(obs, dict):
-            obs = torch.as_tensor(obs['image'], dtype=torch.float32)
+            obs = torch.as_tensor(obs['cam_rgb'], dtype=torch.float32)
 
         obs = self.encoder(obs.to(device))
         net_out = self.latent_pi(obs)
@@ -384,10 +370,10 @@ class awacDrQCNNActor(nn.Module):
 
 class awacDrQCNNQFunction(nn.Module):
 
-    def __init__(self, obs_dim, act_dim, env_image_size, img_channel, feature_dim):
+    def __init__(self, obs_dim, act_dim, env_image_size, feature_dim):
         super().__init__()
 
-        self.encoder = awacDrQCNNEncoder(env_image_size, img_channel, feature_dim)
+        self.encoder = awacDrQCNNEncoder(env_image_size, feature_dim)
 
         self.q = nn.Sequential(
             nn.Linear(feature_dim + obs_dim + act_dim, 1024),
@@ -415,68 +401,6 @@ class awacDrQCNNQFunction(nn.Module):
         q = self.q(obs)
         return torch.squeeze(q, -1) # Critical to ensure q has right shape.
 
-class awacDrQCNNImageOnlyQFunction(nn.Module):
-
-    def __init__(self, obs_dim, act_dim, env_image_size, img_channel, feature_dim):
-        super().__init__()
-
-        self.encoder = awacDrQCNNEncoder(env_image_size, img_channel, feature_dim)
-
-        self.q = nn.Sequential(
-            nn.Linear(feature_dim + act_dim, 1024),
-            nn.LeakyReLU(),
-            nn.Linear(1024, 1024),
-            nn.LeakyReLU(),
-            nn.Linear(1024, 1),
-        )
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.zeros_(m.bias)
-
-    def forward(self, obs, act):
-        obs = self.encoder(obs.to(device))
-        obs = torch.cat([obs, act.to(device)], axis=1)
-        q = self.q(obs)
-        return torch.squeeze(q, -1) # Critical to ensure q has right shape.
-
-class awacDrQCNNStateOnlyQFunction(nn.Module):
-
-    def __init__(self, obs_dim, act_dim, env_image_size, img_channel, feature_dim):
-        super().__init__()
-
-        self.q = nn.Sequential(
-            nn.Linear(obs_dim + act_dim, 1024),
-            nn.LeakyReLU(),
-            nn.Linear(1024, 1024),
-            nn.LeakyReLU(),
-            nn.Linear(1024, 1),
-        )
-
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.Linear):
-                nn.init.normal_(m.weight, 0, 0.01)
-                nn.init.zeros_(m.bias)
-
-    def forward(self, obs_keypoint, act):
-        obs = torch.cat([obs_keypoint.to(device), act.to(device)], axis=1)
-        q = self.q(obs)
-        return torch.squeeze(q, -1) # Critical to ensure q has right shape.
 
 class MLPVFunction(nn.Module):
 
@@ -503,27 +427,23 @@ class MLPActorCritic(nn.Module):
     # def __init__(self, observation_space, action_space, hidden_sizes=(256,256),
     #              activation=nn.ReLU, special_policy=None):
     def __init__(self, observation_space, action_space, hidden_sizes=(1024,1024),
-                 activation=nn.ReLU, bc_model_ckpt_file=None, special_policy=None, env_image_size=32, img_channel=None):
+                 activation=nn.ReLU, bc_model_ckpt_file=None, special_policy=None, env_image_size=32):
         super().__init__()
 
         feature_dim = 50
 
-        if special_policy in ['awac_img', 'awac_img_only', 'awac_state']:
+        if special_policy is 'awac_img':
             obs_dim = observation_space['key_point'].shape[0]
         else:
             obs_dim = observation_space.shape[0]
         act_dim = action_space.shape[0]
-        try:
-            act_limit = action_space.high[0]
-        except:
-            # there is no high attribute in action_space
-            act_limit = 1
+        act_limit = action_space.high[0]
         # build policy and value functions
         if special_policy is 'awac':
             # self.pi = awacMLPActor(obs_dim, act_dim, (256,256,256,256), activation, act_limit).to(device)
             self.pi = awacMLPActor(obs_dim, act_dim, hidden_sizes, activation, act_limit).to(device)
-        elif special_policy in ['awac_img', 'awac_img_only', 'awac_state']:
-            self.pi = awacDrQCNNActor(act_dim, act_limit, env_image_size, img_channel, feature_dim).to(device)
+        elif special_policy is 'awac_img':
+            self.pi = awacDrQCNNActor(act_dim, act_limit, env_image_size, feature_dim).to(device)
         else:
             self.pi = SquashedGaussianMLPActor(obs_dim, act_dim, hidden_sizes, activation, act_limit).to(device)
 
@@ -558,14 +478,10 @@ class MLPActorCritic(nn.Module):
             self.pi.load_state_dict(pretrained_dict)
 
         if special_policy is 'awac_img':
-            self.q1 = awacDrQCNNQFunction(obs_dim, act_dim, env_image_size, img_channel, feature_dim).to(device)
-            self.q2 = awacDrQCNNQFunction(obs_dim, act_dim, env_image_size, img_channel, feature_dim).to(device)
-        elif special_policy is 'awac_img_only':
-            self.q1 = awacDrQCNNImageOnlyQFunction(obs_dim, act_dim, env_image_size, img_channel, feature_dim).to(device)
-            self.q2 = awacDrQCNNImageOnlyQFunction(obs_dim, act_dim, env_image_size, img_channel, feature_dim).to(device)
-        elif special_policy is 'awac_state':
-            self.q1 = awacDrQCNNStateOnlyQFunction(obs_dim, act_dim, env_image_size, img_channel, feature_dim).to(device)
-            self.q2 = awacDrQCNNStateOnlyQFunction(obs_dim, act_dim, env_image_size, img_channel, feature_dim).to(device)
+            self.q1 = awacDrQCNNQFunction(obs_dim, act_dim, env_image_size, feature_dim).to(device)
+            self.q2 = awacDrQCNNQFunction(obs_dim, act_dim, env_image_size, feature_dim).to(device)
+            self.pi.encoder.copy_conv_weights_from(self.q1.encoder)
+            self.q2.encoder.copy_conv_weights_from(self.pi.encoder)
         else:
             self.q1 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation).to(device)
             self.q2 = MLPQFunction(obs_dim, act_dim, hidden_sizes, activation).to(device)

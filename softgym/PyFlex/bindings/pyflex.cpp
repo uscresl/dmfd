@@ -1,5 +1,5 @@
 #include <bindings/main.cpp>
-#include "opengl/shader.h"
+
 
 char rope_path[100];
 char box_high_path[100];
@@ -119,7 +119,7 @@ void pyflex_init(bool headless=false, bool render=true, int camera_width=720, in
         //     SDL_SetWindowFullscreen(g_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
         ReshapeWindow(g_screenWidth, g_screenHeight);
-    }
+    } 
     else if (g_render == true)
 	{
 		RenderInitOptions options;
@@ -475,7 +475,7 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
 
     auto bufl = lower.request();
     auto lower_ptr = (float *) bufl.ptr;
-
+   
     MapBuffers(g_buffers);
 
     // if (g_buffers->rigidIndices.empty())
@@ -523,7 +523,7 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
 
     UnmapBuffers(g_buffers);
 
-    // reset pyflex solvers
+    // reset pyflex solvers 
     // NvFlexSetParams(g_solver, &g_params);
     // NvFlexSetParticles(g_solver, g_buffers->positions.buffer, nullptr);
     // NvFlexSetVelocities(g_solver, g_buffers->velocities.buffer, nullptr);
@@ -534,10 +534,10 @@ void pyflex_add_rigid_body(py::array_t<float> positions, py::array_t<float> velo
     NvFlexSetActive(g_solver, g_buffers->activeIndices.buffer, nullptr);
     // printf("ok till here\n");
     NvFlexSetActiveCount(g_solver, numParticles);
-    // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer,
-    //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer,
-    //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer,
-    //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer,
+    // NvFlexSetRigids(g_solver, g_buffers->rigidOffsets.buffer, g_buffers->rigidIndices.buffer, 
+    //     g_buffers->rigidLocalPositions.buffer, g_buffers->rigidLocalNormals.buffer, 
+    //     g_buffers->rigidCoefficients.buffer, g_buffers->rigidPlasticThresholds.buffer, 
+    //     g_buffers->rigidPlasticCreeps.buffer, g_buffers->rigidRotations.buffer, 
     //     g_buffers->rigidTranslations.buffer, g_buffers->rigidOffsets.size() - 1, g_buffers->rigidIndices.size());
     // printf("also ok here\n");
 }
@@ -782,12 +782,6 @@ void pyflex_set_shape_color(py::array_t<float> color) {
     for (int i=0; i<3; ++i) g_shape_color[i] = ptr[i];
 }
 
-void pyflex_set_box_color(py::array_t<float> color) {
-    auto buf = color.request();
-    auto ptr = (float *) buf.ptr;
-    for (int i=0; i<3; ++i) g_box_color[i] = ptr[i];
-}
-
 void pyflex_set_shape_states(py::array_t<float> states) {
     pyflex_MapShapeBuffers(g_buffers);
 
@@ -872,7 +866,7 @@ void pyflex_set_camera_params(py::array_t<float> update_camera_param) {
         g_screenHeight = camera_param_ptr[7];}
 }
 
-std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int capture, char *path) {
+py::array_t<int> pyflex_render(int capture, char *path) {
     // TODO: Turn off the GUI menu for rendering
     static double lastTime;
 
@@ -1006,26 +1000,12 @@ std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int cap
     int rendered_img_int32_ptr[g_screenWidth * g_screenHeight];
     ReadFrame(rendered_img_int32_ptr, g_screenWidth, g_screenHeight);
 
-    /*
-    * This depth rendering functionality in PyFLex was provided by
-    * Zhenjia Xu
-    * email: xuzhenjia [at] cs (dot) columbia (dot) edu
-    * website: https://www.zhenjiaxu.com/
-    */
-    auto rendered_depth = py::array_t<float>((float)g_screenWidth * g_screenHeight);
-    auto rendered_depth_ptr = (float *)rendered_depth.request().ptr;
-
-    float rendered_depth_float_ptr[g_screenWidth * g_screenHeight];
-    glVerify(glReadBuffer(GL_BACK));
-    glReadPixels(0, 0, g_screenWidth, g_screenHeight, GL_DEPTH_COMPONENT, GL_FLOAT, rendered_depth_float_ptr);
-
     for (int i = 0; i < g_screenWidth * g_screenHeight; ++i) {
         int32_abgr_to_int8_rgba((uint32_t) rendered_img_int32_ptr[i],
                                 rendered_img_ptr[4 * i],
                                 rendered_img_ptr[4 * i + 1],
                                 rendered_img_ptr[4 * i + 2],
                                 rendered_img_ptr[4 * i + 3]);
-        rendered_depth_ptr[i] = 2 * g_camFar * g_camNear / (g_camFar + g_camNear - (2 * rendered_depth_float_ptr[i] - 1) * (g_camFar - g_camNear));
     }
     // Should be able to return the image here, instead of at the end
 
@@ -1111,16 +1091,9 @@ std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render(int cap
         g_ffmpeg = nullptr;
     }
 
-    return std::make_tuple(rendered_img, rendered_depth);
+    return rendered_img;
 }
 
-std::tuple<py::array_t<unsigned char>, py::array_t<float>> pyflex_render_cloth(int capture, char *path) {
-    int g_clothOnly_bak = g_clothOnly;
-    g_clothOnly = 1;
-    auto ret = pyflex_render(capture, path);
-    g_clothOnly = g_clothOnly_bak;
-    return ret;
-}
 
 PYBIND11_MODULE(pyflex, m) {
     m.def("main", &main);
@@ -1133,14 +1106,11 @@ PYBIND11_MODULE(pyflex, m) {
           py::arg("capture") = 0,
           py::arg("path") = nullptr,
           py::arg("render") = 0);
-    m.def("render", &pyflex_render,
+    m.def("render", &pyflex_render, 
           py::arg("capture") = 0,
-          py::arg("path") = nullptr
+          py::arg("path") = nullptr    
         );
-    m.def("render_cloth", &pyflex_render_cloth,
-          py::arg("capture") = 0,
-          py::arg("path") = nullptr
-        );
+
     m.def("get_camera_params", &pyflex_get_camera_params, "Get camera parameters");
     m.def("set_camera_params", &pyflex_set_camera_params, "Set camera parameters");
 
@@ -1189,6 +1159,5 @@ PYBIND11_MODULE(pyflex, m) {
 
     m.def("add_rigid_body", &pyflex_add_rigid_body);
     m.def("set_shape_color", &pyflex_set_shape_color, "Set the color of the shape");
-    m.def("set_box_color", &pyflex_set_box_color, "Set the color of the box");
 }
 

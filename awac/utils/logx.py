@@ -119,7 +119,7 @@ class Logger:
         with open(osp.join(self.output_dir, "config.json"), 'w') as out:
             out.write(output)
 
-    def save_state(self, state_dict, itr=None, force_save=False):
+    def save_state(self, state_dict, itr=None):
         """
         Saves the state of an experiment.
 
@@ -140,18 +140,12 @@ class Logger:
 
             itr: An int, or None. Current iteration of training.
         """
-        # Save every 1M steps or when forced
-        if force_save:
-            print(f"Forcing saving the model at {itr} iterations")
-        if itr % 1_000_000 == 0 or force_save:
-            state_dict['iterations'] = itr
-            state_dict['torch_rng_state'] = torch.get_rng_state()
-            state_dict['numpy_rng_state'] = np.random.get_state()
-            fname = 'vars.pkl' if itr is None else 'vars_%d.pkl'%itr
-            try:
-                joblib.dump(state_dict, osp.join(self.output_dir, fname))
-            except:
-                self.log('Warning: could not pickle state_dict.', color='red')
+        # comment out due to it taking up a lot of storage
+        # fname = 'vars.pkl' if itr is None else 'vars%d.pkl'%itr
+        # try:
+        #     joblib.dump(state_dict, osp.join(self.output_dir, fname))
+        # except:
+        #     self.log('Warning: could not pickle state_dict.', color='red')
         if hasattr(self, 'tf_saver_elements'):
             self._tf_simple_save(itr)
         if hasattr(self, 'pytorch_saver_elements'):

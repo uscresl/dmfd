@@ -25,5 +25,4 @@ python experiments/run_sb3.py \
 --sb3_iterations=1_000_000 \
 --seed=${seed} \
 --enable_loading_states_from_folder=True \
---env_kwargs_num_picker=1 \
 --env_kwargs_num_variations=1

@@ -7,13 +7,13 @@ env_name: PourWater
 # See Dreamer TF2's implementation: https://github.com/danijar/dreamer/blob/02f0210f5991c7710826ca7881f19c64a012290c/dreamer.py#L340
 action_repeat: 4 # not actually used
 # train
-num_train_steps: 3010000
+num_train_steps: 1100000
 num_train_iters: 1
 num_seed_steps: 1000
 replay_buffer_capacity: 100000
 seed: 1
 # eval
-eval_frequency: 50000
+eval_frequency: 10000
 num_eval_episodes: 10
 # misc
 log_frequency_step: 10000

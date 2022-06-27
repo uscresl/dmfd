@@ -118,7 +118,7 @@ using namespace std;
 
 int g_screenWidth = 720;
 int g_screenHeight = 720;
-int g_msaaSamples = 0;
+int g_msaaSamples = 8;
 
 int g_numSubsteps;
 
@@ -157,7 +157,6 @@ int g_maxNeighborsPerParticle;
 int g_numExtraParticles;
 int g_numExtraMultiplier = 1;
 int g_maxContactsPerParticle;
-int g_clothOnly = 0;
 
 // mesh used for deformable object rendering
 Mesh *g_mesh;
@@ -483,7 +482,6 @@ float g_waveAmplitude = 1.0f;
 float g_waveFloorTilt = 0.0f;
 
 Vec3 g_shape_color=Vec3(0.9);
-Vec3 g_box_color=Vec3(0.5);
 Vec3 g_sceneLower;
 Vec3 g_sceneUpper;
 
@@ -1390,12 +1388,12 @@ void RenderScene() {
     // give scene a chance to do custom drawing
     g_scenes[g_scene]->Draw(1);
 
-    if (g_drawMesh && !g_clothOnly)
+    if (g_drawMesh)
         DrawMesh(g_mesh, g_meshColor);
-
+    
     // printf("pass DrawMesh\n");
-    if (!g_clothOnly)
-        DrawShapes();
+
+    DrawShapes();
     // printf("pass DrawShapes\n");
 
     if (g_drawCloth && g_buffers->triangles.size()) {
@@ -1404,7 +1402,7 @@ void RenderScene() {
                   g_expandCloth);
     }
 
-    if (g_drawRopes && !g_clothOnly) {
+    if (g_drawRopes) {
         for (size_t i = 0; i < g_ropes.size(); ++i)
             DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
                      radius * g_ropeScale, i);
@@ -1448,32 +1446,25 @@ void RenderScene() {
     int passes = g_increaseGfxLoadForAsyncComputeTesting ? 50 : 1;
 
     for (int i = 0; i != passes; i++) {
-        if (g_clothOnly){
-            if (g_drawCloth && g_buffers->triangles.size())
-                            DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
-                                      g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
-                                      g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
-        } else
-        {
-            DrawPlanes((Vec4 *) g_params.planes, g_params.numPlanes, g_drawPlaneBias);
+        DrawPlanes((Vec4 *) g_params.planes, g_params.numPlanes, g_drawPlaneBias);
 
-            if (g_drawMesh)
-                DrawMesh(g_mesh, g_meshColor);
+        if (g_drawMesh)
+            DrawMesh(g_mesh, g_meshColor);
 
 
-            DrawShapes();
+        DrawShapes();
 
-            if (g_drawCloth && g_buffers->triangles.size())
-                DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
-                          g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
-                          g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
+        if (g_drawCloth && g_buffers->triangles.size())
+            DrawCloth(&g_buffers->positions[0], &g_buffers->normals[0],
+                      g_buffers->uvs.size() ? &g_buffers->uvs[0].x : nullptr, &g_buffers->triangles[0],
+                      g_buffers->triangles.size() / 3, g_buffers->positions.size(), 3, g_expandCloth);
 
-            if (g_drawRopes) {
-                for (size_t i = 0; i < g_ropes.size(); ++i)
-                    DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
-                             g_params.radius * 0.5f * g_ropeScale, i);
-            }
+        if (g_drawRopes) {
+            for (size_t i = 0; i < g_ropes.size(); ++i)
+                DrawRope(&g_buffers->positions[0], &g_ropes[i].mIndices[0], g_ropes[i].mIndices.size(),
+                         g_params.radius * 0.5f * g_ropeScale, i);
         }
+
         // give scene a chance to do custom drawing
         g_scenes[g_scene]->Draw(0);
     }
@@ -1508,7 +1499,7 @@ void RenderScene() {
                           g_shadowMap, g_diffuseMotionScale, g_diffuseInscatter, g_diffuseOutscatter, g_diffuseShadow,
                           true);
         // printf("pass RenderDiffuse\n");
-
+        
     } else {
         // draw all particles as spheres
         if (g_drawPoints) {
@@ -1696,8 +1687,7 @@ void DrawShapes() {
                              ScaleMatrix(Vec3(geo.box.halfExtents) * 2.0f);
             box->Transform(xform);
 
-            // DrawMesh(box, Vec3(color));
-            DrawMesh(box, Vec3(g_box_color));
+            DrawMesh(box, Vec3(color));
             delete box;
         } else if (type == eNvFlexShapeConvexMesh) {
             if (g_convexes.find(geo.convexMesh.mesh) != g_convexes.end()) {
