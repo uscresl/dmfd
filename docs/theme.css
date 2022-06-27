@@ -287,7 +287,7 @@ div#markdown-body #mopa-pd-stages {
     }
 
     .title {
-        font-size: 0.8em;
+        font-size: 3.2vw;
     }
 
     .excerpt{
@@ -340,7 +340,7 @@ div#markdown-body #mopa-pd-stages {
         display: none;
     }
     .title{
-        font-size: 1.0em;
+        font-size: 3.2vw;
     }
     .authorship-container {
         font-size: 0.8em;
