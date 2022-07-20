@@ -11,7 +11,7 @@ Manipulating deformable objects is a formidable challenge: extracting state info
 
 ## Results
 
-The following rollouts are generated from our image-based DMfD agent.
+The following rollouts are generated from our image-based DMfD agent. White sphere in simulation indicates end-effector.
 
 <br>
 
