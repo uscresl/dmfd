@@ -1,9 +1,10 @@
 # Learning Deformable Object Manipulation from Expert Demonstrations
 
 [[Project website](https://uscresl.github.io/dmfd)]
-<!-- [[Paper]()] -->
+[[arXiv PDF](https://arxiv.org/abs/2207.10148)]
+[[IEEE manuscript](https://ieeexplore.ieee.org/document/9813374)]
 
-This project is a PyTorch implementation of Learning Deformable Object Manipulation from Expert Demonstrations, published in IEEE Robotics and Automation Letters (RA-L) 2022.
+This project is a PyTorch implementation of Learning Deformable Object Manipulation from Expert Demonstrations, published in IEEE RA-L and IEEE IROS, 2022.
 
 <p align="center">
     <img src="docs/img/Sim2Real_CFDUnpinned.png">
@@ -215,10 +216,13 @@ python experiments/generate_expert_trajs.py --save_observation_img=True --num_ep
 If you find this codebase useful in your research, please consider citing:
 ```
 @article{salhotra2022dmfd,
-  title={Learning Deformable Object Manipulation from Expert Demonstrations},
-  author={Salhotra, Gautam and Liu, I-Chun Arthur and Dominguez-Kuhne, Marcus and Sukhatme, Gaurav S.},
-  journal={IEEE Robotics and Automation Letters},
-  year={2022},
-  publisher={IEEE}
+	author={Salhotra, Gautam and Liu, I-Chun Arthur and Dominguez-Kuhne, Marcus and Sukhatme, Gaurav S.},
+	journal={IEEE Robotics and Automation Letters},
+	title={Learning Deformable Object Manipulation From Expert Demonstrations},
+	year={2022},
+	volume={7},
+	number={4},
+	pages={8775-8782},
+	doi={10.1109/LRA.2022.3187843}
 }
 ```
