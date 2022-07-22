@@ -86,11 +86,14 @@ The following rollouts are generated from our image-based DMfD agent. White sphe
 ## Citation
 ```
 @article{salhotra2022dmfd,
-  title={Learning Deformable Object Manipulation from Expert Demonstrations},
-  author={Salhotra, Gautam and Liu, I-Chun Arthur and Dominguez-Kuhne, Marcus and Sukhatme, Gaurav S.},
-  journal={IEEE Robotics and Automation Letters},
-  year={2022},
-  publisher={IEEE}
+	author={Salhotra, Gautam and Liu, I-Chun Arthur and Dominguez-Kuhne, Marcus and Sukhatme, Gaurav S.},
+	journal={IEEE Robotics and Automation Letters},
+	title={Learning Deformable Object Manipulation From Expert Demonstrations},
+	year={2022},
+	volume={7},
+	number={4},
+	pages={8775-8782},
+	doi={10.1109/LRA.2022.3187843}
 }
 ```
 <br>
