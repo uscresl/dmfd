@@ -7,7 +7,7 @@
 This project is a PyTorch implementation of Learning Deformable Object Manipulation from Expert Demonstrations, published in IEEE RA-L and IEEE IROS, 2022.
 
 <p align="center">
-    <img src="docs/img/Sim2Real_CFDUnpinned.png">
+    <img src="docs/img/Thumbnail.gif">
 </p>
 
 ## SoftGym Installation
