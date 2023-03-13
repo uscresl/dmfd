@@ -1,0 +1,12 @@
+# Data files
+data/
+tmp/
+
+# other directories
+venv/
+wandb/
+.vscode/
+
+# python ignored files
+*.pyc
+__pycache__
