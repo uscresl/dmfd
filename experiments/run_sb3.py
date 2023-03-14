@@ -100,7 +100,6 @@ def main():
     parser.add_argument('--load_from', default=None, type=str, help="file path to pretrained AWAC object (model, optimizer, etc.)")
     parser.add_argument('--enable_inv_dyn_model', default=False, type=str2bool, help="whether or not to jointly learn DMfD with an inverse dynamics model (inspired by SOIL)")
     parser.add_argument('--inv_dyn_file', default=None, type=str, help='State-only demonstrations for training inverse dynamics model')
-    parser.add_argument('--real_image',  default=None, type=str, help="real image file")
 
     ############## Override environment arguments ##############
     parser.add_argument('--env_kwargs_render', default=True, type=str2bool)  # Turn off rendering can speed up training
@@ -180,9 +179,7 @@ def main():
         if args.agent == 'awac':
             # separate evaluation code for AWAC
             agent = AWAC(args.__dict__, env_kwargs)
-            if args.real_image:
-                agent.real_image_eval(args.__dict__)
-            elif args.eval_over_five_seeds:
+            if args.eval_over_five_seeds:
                 agent.eval_agent_five_seeds(args.__dict__)
             else:
                 agent.eval_agent(args.__dict__)

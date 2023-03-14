@@ -7,6 +7,8 @@ from softgym.utils.visualization import save_numpy_as_gif
 import cv2
 import os.path as osp
 import pickle
+import torch
+import random
 
 try:
     import pyflex
@@ -257,6 +259,13 @@ class FlexEnv(gym.Env):
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ set_prev_reward is used for calculate delta rewards"""
         raise NotImplementedError
+
+    def seed(self, seed):
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+        np.random.seed(seed)
+        random.seed(seed)
 
     def _get_obs(self):
         raise NotImplementedError

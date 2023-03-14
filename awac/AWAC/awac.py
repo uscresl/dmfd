@@ -12,7 +12,6 @@ from sb3 import utils
 from softgym.utils.visualization import save_numpy_as_gif
 import os
 from torchvision import transforms
-from scripts.preprocess_realsense_img import preprocess_realsense_image
 
 device = torch.device("cuda")
 class ReplayBuffer:
@@ -724,22 +723,6 @@ class AWAC:
         print(f'Median: {np.median(total_normalized_perf_final):.4f}')
         print(f'25th Percentile: {np.percentile(total_normalized_perf_final, 25):.4f}')
         print(f'75th Percentile: {np.percentile(total_normalized_perf_final, 75):.4f}')
-
-    def real_image_eval(self, config):
-        """
-        Evaluation script for real-world image
-        """
-        self.ac.load_state_dict(torch.load(config['checkpoint']).state_dict())
-        self.ac.eval()
-
-        preprocessed_img, angle = preprocess_realsense_image(config['real_image'])
-        obs = torch.from_numpy(preprocessed_img)
-        action = self.get_action_image_based(obs, True)
-        real_pick, real_place, real_pick_adjusted, real_place_adusted = self.env.sim_to_real_action_mapping(action, angle)
-        print('Real pick xz: ', real_pick[:2])
-        print('Real place xz: ', real_place[:2])
-        print('Real pick adjusted xz: ', real_pick_adjusted[:2])
-        print('Real place adjusted xz: ', real_place_adusted[:2])
 
     def eval_agent(self, config):
         """
