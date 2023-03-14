@@ -193,7 +193,7 @@ div#markdown-body code {
     -webkit-overflow-scrolling: touch;
     overflow-x: auto;
     font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
-    width: 90%;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
     font-size: 0.7em;
@@ -237,6 +237,11 @@ span.env-name {
     margin-left: auto;
     margin-right: auto;
     width: 50%;
+}
+
+#dmfd_RAL_IROS22_mp4 {
+    max-width: none;
+    width: 100%;
 }
 
 .slideshow_wrapper {

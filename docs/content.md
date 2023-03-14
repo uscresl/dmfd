@@ -9,6 +9,16 @@ Manipulating deformable objects is a formidable challenge: extracting state info
 
 ----
 
+## Video
+
+<div class="w3-row-padding"">
+	<video id="dmfd_RAL_IROS22_mp4" height="100%" width="100%" controls>
+		<source src="./video/dmfd_RAL_IROS22.mp4" type="video/mp4">
+	</video>
+</div>
+
+----
+
 ## Results
 
 The following rollouts are generated from our image-based DMfD agent. White sphere in simulation indicates end-effector.
