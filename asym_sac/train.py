@@ -365,7 +365,7 @@ def main(args):
     # WandB
     if args.wandb:
         wandb_logger = wandb.init(
-            project="cto-rl-manipulation",
+            project="dmfd",
             config=args.__dict__,
             sync_tensorboard=True,  # auto-upload tensorboard metrics
             name=args.name)

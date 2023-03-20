@@ -143,7 +143,7 @@ class Workspace(object):
             cfg_dict = cfg.__dict__
             cfg_dict['run_name'] = cfg.name
             self.wandb_run = wandb.init(
-                                    project="cto-rl-manipulation",
+                                    project="dmfd",
                                     config=cfg_dict,
                                     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
                                     name=cfg_dict['run_name'],

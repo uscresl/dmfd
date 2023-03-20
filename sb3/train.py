@@ -197,7 +197,7 @@ def run_task(args, env_kwargs):
     tb_callback = TensorboardCallback(verbose=0)
     if args.wandb:
         run = wandb.init(
-            project="cto-rl-manipulation",
+            project="dmfd",
             config=args.__dict__,
             sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
             name=args.folder_name,

@@ -272,7 +272,7 @@ class AWAC:
 
         if args['wandb']:
             self.wandb_run = wandb.init(
-                project="cto-rl-manipulation",
+                project="dmfd",
                 config=args,
                 name=args['folder_name'],
             )

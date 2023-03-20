@@ -499,7 +499,7 @@ def main_training():
 
     if args.wandb:
         wandb.init(
-            project="cto-rl-manipulation",
+            project="dmfd",
             config={k: v for k, v in args.__dict__.items()},
             name=args.folder_name,
         )
