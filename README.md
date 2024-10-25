@@ -62,12 +62,11 @@ Note that `prepare_1.0.sh` only adds env variables to your current bash. Conside
 
 ## Downloads
 
-- Download [cached_initial_states](https://drive.google.com/drive/folders/1_LFadrIkni1wD1Mz9jdP4yTE8aZ9K5ET?usp=sharing) and place it inside `dmfd/softgym/softgym/` folder
+- Download [cached_initial_states](https://huggingface.co/datasets/arthur801031/dmfd/tree/main/cached_initial_states) and place it inside `dmfd/softgym/softgym/` folder
 
-- For reproducing experimental results or training the behavior cloning agent, download [checkpoints](https://drive.google.com/drive/folders/1HzPfJ5RMqEzuVriqEhxpXYqSyUkod9qk?usp=sharing) and place it on the top level of this project (`dmfd/`)
+- For reproducing experimental results or training the behavior cloning agent, download [checkpoints](https://huggingface.co/datasets/arthur801031/dmfd/tree/main/checkpoints) and place it on the top level of this project (`dmfd/`)
 
-- For training, DMfD and other Learning from Demonstration methods (BC, SAC-LfD, SAC-BC, AWAC) require expert demonstrations. To reproduce paper results, [download](https://drive.google.com/drive/folders/1HoP1icqrOCjgV9K6TxkGyDSIMPN_oOC2?usp=sharing) the appropriate expert demonstrations and place the `pkl` files inside the `dmfd/data/` folder. 
-To use the latest version of the code, you will need to re-generate demonstrations (see 'Generate Expert Demonstrations' below).
+- For training, DMfD and other Learning from Demonstration methods (BC, SAC-LfD, SAC-BC, AWAC) require expert demonstrations. See 'Generate Expert Demonstrations' below.
 
 ## Running benchmarked experiments
 
